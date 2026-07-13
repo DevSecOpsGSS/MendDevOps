@@ -367,7 +367,7 @@ jobs:
               return None
 
 
-          def generate_and_download_v3_report(create_path: str, payload: dict, output_path: str, label: str,
+                   def generate_and_download_v3_report(create_path: str, payload: dict, output_path: str, label: str,
                                                expected_format: str = None) -> bool:
               """
               共用流程: 建立報告 -> 輪詢狀態 -> 下載
@@ -413,25 +413,44 @@ jobs:
                   return False
 
               content_type = dresp.headers.get("Content-Type", "")
-              print(f"[INFO] {label} 下載回應 Content-Type: {content_type}, 大小: {len(dresp.content)} bytes")
+              content = dresp.content
+              print(f"[INFO] {label} 下載回應 Content-Type: {content_type}, 大小: {len(content)} bytes")
+
+              # 有些報告類型 (實測發現 Risk Report 會這樣) API 回傳的其實是一個 zip 壓縮檔，
+              # 裡面才裝著真正的報告檔案，不是直接給檔案本身。偵測 zip 簽章 (PK) 就自動解壓縮取出內容。
+              # 注意：excel (.xlsx) 檔案本身格式就是 zip 容器，這裡要排除，不然會誤拆真正的 xlsx
+              if content[:2] == b"PK" and expected_format != "excel":
+                  print(f"[INFO] {label} 下載回來的是 zip 壓縮檔，正在解壓縮...")
+                  try:
+                      with zipfile.ZipFile(io.BytesIO(content)) as zf:
+                          names = zf.namelist()
+                          if not names:
+                              print(f"[ERROR] {label} zip 壓縮檔是空的")
+                              return False
+                          inner_name = names[0]
+                          content = zf.read(inner_name)
+                          print(f"[INFO] {label} 從 zip 解出: {inner_name} ({len(content)} bytes)")
+                  except zipfile.BadZipFile:
+                      print(f"[ERROR] {label} 開頭是 PK 但不是合法的 zip 檔案")
+                      return False
 
               # 針對 pdf 格式做內容驗證：真正的 PDF 檔案一定是 %PDF 開頭
-              if expected_format == "pdf" and not dresp.content.startswith(b"%PDF"):
-                  preview = dresp.content[:500].decode("utf-8", errors="replace")
+              if expected_format == "pdf" and not content.startswith(b"%PDF"):
+                  preview = content[:500].decode("utf-8", errors="replace")
                   print(f"[ERROR] {label} 下載回來的內容不是有效的 PDF，可能是 API 回傳了錯誤訊息:")
                   print(f"[ERROR] 內容前 500 字元: {preview}")
                   return False
 
               # 針對非 pdf 格式：如果內容看起來像 JSON 錯誤物件 (帶 errorMessage 等欄位) 就攔下來
               if expected_format and expected_format != "pdf" and expected_format != "json":
-                  stripped = dresp.content[:1].decode("utf-8", errors="ignore")
+                  stripped = content[:1].decode("utf-8", errors="ignore")
                   if stripped == "{":
-                      preview = dresp.content[:500].decode("utf-8", errors="replace")
+                      preview = content[:500].decode("utf-8", errors="replace")
                       print(f"[WARN] {label} 預期是 {expected_format} 格式，但下載內容看起來像 JSON，請人工確認:")
                       print(f"[WARN] 內容前 500 字元: {preview}")
 
               with open(output_path, "wb") as f:
-                  f.write(dresp.content)
+                  f.write(content)
               print(f"[SUCCESS] {label} 已下載: {output_path}")
               return True
 
