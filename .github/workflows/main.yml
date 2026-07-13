@@ -38,7 +38,7 @@ env:
   INVENTORY_REPORT_FORMAT: 'excel'
 
   # Due Diligence Report 格式：excel / json / xml (不支援 pdf)
-  DUE_DILIGENCE_FORMAT : 'json'
+  DUE_DILIGENCE_FORMAT : 'excel'
   
   # 部門名稱 如 OLD_TS
   DEPARTMENT: 'OLD_TS'
