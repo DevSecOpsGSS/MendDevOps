@@ -367,8 +367,8 @@ jobs:
               return None
 
 
-                   def generate_and_download_v3_report(create_path: str, payload: dict, output_path: str, label: str,
-                                               expected_format: str = None) -> bool:
+          def generate_and_download_v3_report(create_path: str, payload: dict, output_path: str, label: str,
+          expected_format: str = None) -> bool:
               """
               共用流程: 建立報告 -> 輪詢狀態 -> 下載
               create_path 例如 f"projects/{project_uuid}/dependencies/reports/risk"
