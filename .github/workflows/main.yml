@@ -367,10 +367,13 @@ jobs:
               return None
 
 
-          def generate_and_download_v3_report(create_path: str, payload: dict, output_path: str, label: str) -> bool:
+          def generate_and_download_v3_report(create_path: str, payload: dict, output_path: str, label: str,
+                                               expected_format: str = None) -> bool:
               """
               共用流程: 建立報告 -> 輪詢狀態 -> 下載
               create_path 例如 f"projects/{project_uuid}/dependencies/reports/risk"
+              expected_format 用來驗證下載回來的內容是不是真的長那個樣子 (例如 pdf 應該要有 %PDF 開頭簽章)，
+              避免 API 其實回了 JSON 錯誤訊息，卻被我們原封不動存成 .pdf/.xlsx，導致檔案打不開。
               """
               headers = mend_platform_headers()
               resp = requests.post(f"{MEND_API_URL}/{create_path}", json=payload, headers=headers, timeout=60)
