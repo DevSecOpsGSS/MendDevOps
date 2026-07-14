@@ -104,7 +104,7 @@ jobs:
           MEND_UA_PATH: ${{ env.MEND_UA_PATH }}
           
         run: |
-          import os, json, requests, subprocess, shutil, stat, time, sys, signal, threading, re
+          import os, json, requests, subprocess, time, sys, signal, threading, re, zipfile, io
 
           COMPLIANCE_STANDARD = os.getenv("COMPLIANCE_STANDARD")
           COMPLIANCE_REPORT_LEVEL = os.getenv("COMPLIANCE_REPORT_LEVEL")
