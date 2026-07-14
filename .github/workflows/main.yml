@@ -418,17 +418,31 @@ jobs:
               # 用「zip 裡只有 1 個檔案」來判斷是不是這種外層包裝，而不是用 expected_format 排除，
               # 因為真正的 .xlsx 本身雖然也是 zip 格式，但內部一定有幾十個項目 ([Content_Types].xml、
               # xl/worksheets/... 等)，跟外層包裝 zip「只有 1 個檔案」的特徵完全不同，可以放心區分。
+              # Mend 的下載 API 有些報告類型回傳的其實是「外層包裝 zip」，裡面才裝著真正的報告檔案。
+              # 一開始用「zip 裡只有 1 個檔案」判斷，但實測發現外層包裝 zip 有時會有好幾個項目
+              # (可能含資料夾結構等)，數量不可靠。改成直接找「副檔名符合預期格式」的那個檔案來解出，
+              # 找不到才視為「內容本身就是多檔案格式 (例如真正的 xlsx)」，不解包直接使用原始內容。
               if content[:2] == b"PK":
                   try:
                       with zipfile.ZipFile(io.BytesIO(content)) as zf:
-                          names = zf.namelist()
-                          if len(names) == 1:
-                              inner_name = names[0]
+                          # 目錄項目 (資料夾) 不算是檔案，先濾掉
+                          file_names = [n for n in zf.namelist() if not n.endswith("/")]
+                          expected_ext = "." + _ext_for(expected_format) if expected_format else None
+                          matches = [n for n in file_names if expected_ext and n.lower().endswith(expected_ext)]
+
+                          if len(matches) == 1:
+                              inner_name = matches[0]
+                          elif len(file_names) == 1:
+                              inner_name = file_names[0]
+                          else:
+                              inner_name = None
+
+                          if inner_name:
                               print(f"[INFO] {label} 下載回來的是外層包裝 zip，正在解壓縮...")
                               content = zf.read(inner_name)
                               print(f"[INFO] {label} 從 zip 解出: {inner_name} ({len(content)} bytes)")
                           else:
-                              print(f"[INFO] {label} 內容本身就是多檔案的 zip 格式 (例如 xlsx)，不需要解包，共 {len(names)} 個項目")
+                              print(f"[INFO] {label} 內容本身就是多檔案的 zip 格式 (例如 xlsx)，不需要解包，共 {len(file_names)} 個項目")
                   except zipfile.BadZipFile:
                       print(f"[ERROR] {label} 開頭是 PK 但不是合法的 zip 檔案")
                       return False
