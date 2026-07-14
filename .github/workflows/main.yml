@@ -71,7 +71,7 @@ jobs:
           # ============================================================
           # Mend CLI 執行檔的固定路徑 (self-hosted runner 上手動放置好的位置)
           # 若這台 runner 上的路徑不同，改這裡就好，不用改下面呼叫的地方
-          MEND_CLI_PATH = r"C:\mend\cli\mend.exe"
+          MEND_CLI_PATH = r"C:\mend\mend.exe"
           # Unified Agent 設定檔路徑 (mend ua -c 用)
           MEND_UA_PATH = r"C:\mend\wss-unified-agent.txt"
 
