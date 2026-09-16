@@ -24,7 +24,7 @@ env:
   # 會讓 `mend code` 認證失敗：Error: Executing <mend code> ... requires to authenticate first
   # 故此處刻意與 MEND_ORG_UUID 取同一個 Variable，兩者不會不同步。
   # 帳號屬多個 org 時必填，否則掃描結果會落到「該帳號上次存取的 org」。
-  MEND_ORGANIZATION: ${{ vars.MEND_ORG_UUID }}
+  MEND_ORGANIZATION: ${{ secrets.MEND_ORGANIZATION }}
 
   # ============================================================
   # 使用者可調整參數 (放在腳本最上方，方便自行修改)
